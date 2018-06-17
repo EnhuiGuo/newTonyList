@@ -1,0 +1,222 @@
+<style lang='css'>
+@import '/zanui/helper.wxss';
+
+.container {
+  background: #f9f9f9;
+  overflow: hidden;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 15px 0;
+}
+
+.container::before {
+  position: fixed;
+  top: 0;
+  left: 0;
+  content: ' ';
+  width: 100%;
+  height: 1rpx;
+  background-color: #e2e2e2;
+  z-index: 5;
+}
+
+.doc-title {
+  position: relative;
+  padding: 15px 0;
+  margin: 10px 15px;
+  line-height: 25px;
+  font-size: 25px;
+  color: #666;
+}
+
+.doc-description {
+  margin: 14px 0;
+  padding: 0 15px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #666;
+}
+</style>
+
+<script>
+import wepy from 'wepy'
+import 'wepy-async-function'
+
+var APPID = 'wx6437d27bf0e7b7bf'
+var SECRET = '0cc345369b25da95be6022f814f144ec'
+
+export default class extends wepy.app {
+  config = {
+    pages: [
+      // 'example/dashboard',
+      'pages/index',
+      'pages/goodDetail',
+      'pages/profile',
+      'pages/itemDetail',
+      'pages/addItem',
+      'pages/itemEdit',
+      // 'example/actionsheet',
+      // 'example/btn',
+      // 'example/badge',
+      // 'example/capsule',
+      // 'example/card',
+      // 'example/cell',
+      // 'example/dialog',
+      // 'example/field',
+      // 'example/helper',
+      // 'example/icon',
+      // 'example/layout',
+      // 'example/loadmore',
+      // 'example/noticebar',
+      // 'example/panel',
+      // 'example/popup',
+      // 'example/select',
+      // 'example/stepper',
+      // 'example/steps',
+      // 'example/switch',
+      // 'example/tab',
+      // 'example/tag',
+      // 'example/toptips',
+      // 'example/toast'
+    ],
+    window: {
+      navigationBarBackgroundColor: '#FAFAFA',
+      navigationBarTitleText: 'ZanUI-Wepy',
+      navigationBarTextStyle: 'black',
+      backgroundTextStyle: 'dark',
+      backgroundColor: '#f9f9f9'
+    },
+    "tabBar": {
+      "color": "#6e6d6b",
+      "selectedColor": "#e64340",
+      "borderStyle": "white",
+      "backgroundColor": "#fff",
+      "box-shadow": "0 0 6px 0",
+      "list": [
+        {
+          "pagePath": "pages/index",
+          "iconPath": "images/nav/home-off.png",
+          "selectedIconPath": "images/nav/home-on.png",
+          "text": "首页"
+        },
+        {
+          "pagePath": "pages/profile",
+          "iconPath": "images/nav/my-off.png",
+          "selectedIconPath": "images/nav/my-on.png",
+          "text": "出售"
+        }
+      ]
+    },
+    debug: false
+  }
+
+  constructor() {
+    super()
+    this.use('promisify')
+  }
+
+  onLaunch() {
+    // 展示本地存储能力
+    var logs = wepy.getStorageSync('logs') || []
+    logs.unshift(Date.now())
+    wepy.setStorageSync('logs', logs)
+
+    wepy.login().then(res => {
+      if (res.code) {
+        wx.getStorage({
+          key: 'openid',
+          success: function(res) {
+          },
+          fail: function(e) {
+            // 发起网络请求
+            wx.request({
+              url: 'https://api.weixin.qq.com/sns/jscode2session?appid=' + APPID + '&secret=' + SECRET + '&js_code=' + res.code + '&grant_type=authorization_code',
+              success: function(res) {
+                wx.setStorageSync('openid', res.data.openid)
+              }
+            })
+          }
+        })
+      } else {
+        console.log('获取用户登录态失败！' + res.errMsg)
+      }
+    })
+
+    wepy.getSetting()
+  }
+
+  globalData = {
+    userInfo: null,
+    latitude: 0,
+    longitude: 0,
+    navigating: false
+  }
+
+  uploadImages(data) {
+    var that = this,
+      i = data.i ? data.i : 0,
+      success = data.success ? data.success : 0,
+      fail = data.fail ? data.fail : 0
+    wx.uploadFile({
+      url: data.url,
+      filePath: data.paths[i],
+      name: 'fileData',
+      formData: {
+        itemId: data.itemId.data,
+      },
+      success: (id) => {
+        success++
+      },
+      fail: (res) => {
+        fail++
+      },
+      complete: () => {
+        i++
+        if (i === data.paths.length) {
+          data.finished(true)
+        } else {
+          data.i = i
+          data.success = success
+          data.fail = fail
+          that.uploadImages(data)
+        }
+      },
+    })
+  }
+
+  uploadEditImages(data) {
+    var that = this,
+      i = data.i ? data.i : 0,
+      success = data.success ? data.success : 0,
+      fail = data.fail ? data.fail : 0
+    wx.uploadFile({
+      url: data.url,
+      filePath: data.imgs[i].Path,
+      name: 'fileData',
+      formData: {
+        itemId: data.itemId,
+        id: data.imgs[i].Id
+      },
+      success: (message) => {
+        success++
+        data.chenggong(message.data, i)
+        // 这里可能有BUG，失败也会执行这里
+      },
+      fail: (res) => {
+        fail++
+      },
+      complete: () => {
+        i++
+        if (i === data.imgs.length) {
+          data.finished(true)
+        } else {
+          data.i = i
+          data.success = success
+          data.fail = fail
+          that.uploadEditImages(data)
+        }
+      },
+    })
+  }
+}
+</script>

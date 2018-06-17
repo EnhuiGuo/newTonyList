@@ -1,0 +1,638 @@
+<style lang="css">
+@import '/zanui/panel.wxss';
+@import '/zanui/card.wxss';
+@import '/zanui/color.wxss';
+
+.container {
+    background-color: #F2f2f2;
+    min-height: 100%
+}
+
+.swiper-container {
+    width: 750rpx;
+    position: relative;
+}
+
+.swiper_box {
+    width: 100%;
+    height: 562.5rpx;
+}
+
+swiper-item image {
+    width: 100%;
+    display: inline-block;
+    overflow: hidden;
+    height: 562.5rpx;
+}
+
+.swiper-container .dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 20rpx;
+    display: flex;
+    justify-content: center;
+}
+
+.swiper-container .dots .dot {
+    margin: 0 8rpx;
+    width: 14rpx;
+    height: 14rpx;
+    background: #fff;
+    border-radius: 50%;
+    transition: all .6s;
+    opacity: .5;
+}
+
+.swiper-container .dots .dot.active {
+    width: 14rpx;
+    opacity: 1;
+}
+
+.type-navbar {
+    white-space: nowrap;
+    height: 88rpx;
+    width: 100%;
+    background-color: #fff;
+}
+
+::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    color: transparent;
+}
+
+.type-box {
+    width: 160rpx;
+    box-sizing: content-box;
+    font-size: 24rpx;
+    line-height: 84rpx;
+    text-align: center;
+    display: inline-block;
+    overflow: hidden;
+}
+
+.type-navbar-item {
+    border-bottom: 4rpx solid #fff;
+}
+
+.type-item-on {
+    border-bottom: 4rpx solid #e64340;
+}
+
+.goods-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    box-sizing: content-box;
+    padding: 24rpx;
+}
+
+.goods-box {
+    width: 339rpx;
+    height: 472rpx;
+    background-color: #fff;
+    overflow: hidden;
+    margin-bottom: 24rpx;
+}
+
+.goods-box .img-box {
+    width: 339rpx;
+    height: 339rpx;
+    overflow: hidden;
+}
+
+.goods-box .img-box image {
+    width: 339rpx;
+    height: 339rpx;
+}
+
+.goods-box .goods-title {
+    width: 280rpx;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 24rpx;
+    padding: 24rpx 0 0rpx 0;
+    color: #000;
+    margin-left: 24rpx;
+}
+
+.goods-box .goods-price {
+    width: 280rpx;
+    overflow: hidden;
+    font-size: 24rpx;
+    padding: 24rpx 0;
+    color: #e64340;
+    margin-left: 24rpx;
+}
+
+.no-more-goods {
+    padding: 24rpx 0;
+    text-align: center;
+    font-size: 24rpx;
+    color: #999;
+}
+
+.type-container {
+    width: 100%;
+    height: 88rpx;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+.notice {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    height: 80rpx;
+    line-height: 80rpx;
+    width: 750rpx;
+    margin-top: 10rpx;
+    background-color: #fff;
+}
+
+.notice_swiper {
+    padding-top: 15rpx;
+    padding-bottom: 15rpx;
+    height: 50rpx;
+    line-height: 50rpx;
+    width: 635rpx;
+}
+
+.notice_iteml {
+    padding-left: 25rpx;
+    padding-top: 15rpx;
+    padding-bottom: 15rpx;
+    font-size: 26rpx;
+    width: 80rpx;
+    height: 50rpx;
+    line-height: 50rpx;
+    color: #999;
+}
+
+.notice_itemr {
+    padding-left: 10rpx;
+    font-size: 26rpx;
+    overflow: hidden;
+    color: #e64340;
+    width: 635rpx;
+    height: 50rpx;
+    line-height: 50rpx;
+}
+
+.pos-fiexd {
+    position: fixed;
+    top: 0;
+    left: 0;
+}
+
+.coupons {
+    margin-top: 10rpx;
+    width: 100%;
+    height: 180rpx;
+    overflow: hidden;
+}
+
+.coupons-scroll {
+    white-space: nowrap;
+    height: 180rpx;
+    width: 100%;
+    background-color: #fff;
+}
+
+.coupons-item {
+    width: 300rpx;
+    height: 180rpx;
+    margin: 10rpx;
+    padding-top: 20rpx;
+    padding-left: 15rpx;
+    background-color: #f1a83b;
+    box-sizing: content-box;
+    font-size: 20rpx;
+    line-height: 35rpx;
+    overflow: hidden;
+    color: #fff;
+    display: inline-block;
+}
+</style>
+
+<template>
+    <view class="container">
+        <view class="swiper-container">
+            <swiper class="swiper_box" autoplay="{{autoplay}}" interval="{{interval}}" duration="{{duration}}" bindchange="swiperchange">
+                <block wx:for="{{banners}}" wx:key="id">
+                    <swiper-item>
+                        <image bindtap="toDetailsTap" data-id="{{item.Id}}" src="{{item.ShowImgPath}}" class="slide-image" width="750rpx" height="562.5rpx" />
+                    </swiper-item>
+                </block>
+            </swiper>
+            <view class="dots">
+                <block wx:for="{{banners}}" wx:key="unique">
+                    <view class="dot{{index == swiperCurrent ? ' active' : ''}}"></view>
+                </block>
+            </view>
+        </view>
+        <view class="type-container">
+            <scroll-view class="type-navbar" scroll-x="true">
+                <view class="type-box" wx:for-items="{{catalogues}}" wx:key="id">
+                    <view id="{{item.id}}" class="type-navbar-item {{activeCategoryId == item.id ? 'type-item-on' : ''}}" bindtap="tabClick">
+                        {{item.name}}
+                    </view>
+                </view>
+            </scroll-view>
+        </view>
+
+        <!--<view class="goods-container">
+                                                        <view class="goods-box" wx:for-items="{{goods}}" wx:key="{{index}}" bindtap="toDetailsTap" data-id="{{item.Id}}">
+                                                            <view class="img-box">
+                                                                <image src="{{item.ShowImgPath}}" class="image" mode="aspectFill" lazy-load="true" />
+                                                            </view>
+                                                            <view class="goods-title">{{item.Description}}</view>
+                                                            <view class="goods-price">$ {{item.Price}}
+                                                            </view>
+                                                        </view>
+                                                    </view>-->
+
+        <view class="zan-panel" wx:for-items="{{goods}}" wx:key="{{index}}" bindtap="toDetailsTap" data-id="{{item.Id}}">
+            <view class="zan-card">
+                <view class="zan-card__thumb">
+                    <image class="zan-card__img" src="{{item.ShowImgPath}}" mode="aspectFit" lazy-load="true" />
+                </view>
+                <view class="zan-card__detail">
+                    <view class="zan-card__detail-row">
+                        <view class="zan-card__right-col zan-c-red">$ {{item.Price}}</view>
+                        <view class="zan-card__left-col zan-ellipsis--l2">
+                            {{item.Description}}
+                        </view>
+                    </view>
+
+                    <view class="zan-card__detail-row zan-c-gray-darker">
+                        <view class="zan-card__left-col" wx:if="{{item.CanDelivery}}">
+                            可送货
+                        </view>
+                    </view>
+
+                    <view class="zan-card__detail-row zan-c-gray-darker">
+                        <view class="zan-card__left-col">{{item.Distance}} km</view>
+                    </view>
+                </view>
+            </view>
+        </view>
+
+        <view wx:if="{{currentLoading}}" class="weui-loadmore">
+            <zanLoadmore :loading="_true"> </zanLoadmore>
+        </view>
+        <view wx:else>
+            <view wx:if="{{loadingMore && loadingFinished}}">
+            </view>
+            <view wx:else class="no-more-goods">没有更多啦</view>
+        </view>
+    </view>
+</template>
+
+<script>
+
+var skip = 0;
+
+import wepy from 'wepy'
+import zanLoadmore from '../components/zan-loadmore'
+
+export default class Index extends wepy.page {
+    config = {
+        navigationBarTitleText: "",
+        enablePullDownRefresh: true
+    }
+
+    components = {
+        zanLoadmore: zanLoadmore
+    }
+
+    data = {
+        indicatorDots: true,
+        autoplay: true,
+        interval: 3000,
+        duration: 1000,
+        loadingHidden: false, // loading
+        loadingFinished: false,
+        currentLoading: false,
+        userInfo: {},
+        swiperCurrent: 0,
+        selectCurrent: 0,
+        categories: [],
+        catalogues: [
+            {
+                id: -1,
+                name: "全部"
+            },
+            {
+                id: 4,
+                name: "汽车"
+            },
+            {
+                id: 3,
+                name: "家电"
+            },
+            {
+                id: 1,
+                name: "厨具"
+            },
+            {
+                id: 2,
+                name: "服装"
+            },
+            {
+                id: 0,
+                name: "其他"
+            },
+        ],
+        activeCategoryId: 0,
+        goods: [],
+        banners: [],
+        loadingMore: true,
+        hasNoCoupons: true,
+        coupons: [],
+        _true: true
+    };
+
+    methods = {
+        swiperchange(e) {
+            var _this = this
+            _this.swiperCurrent = e.detail.current
+        },
+
+        tabClick: function(e) {
+            console.log(e);
+            var _this = this;
+            skip = 0;
+
+            _this.goods = [];
+            _this.activeCategoryId = e.currentTarget.id;
+            _this.currentLoading = true;
+            _this.$apply();
+            _this.getGoodsList(this.data.activeCategoryId);
+        },
+
+        toDetailsTap: function(e) {
+
+            if (!this.$parent.globalData.navigating) {
+                this.$parent.globalData.navigating = true;
+                wx.navigateTo({
+                    url: "/pages/goodDetail?id=" + e.currentTarget.dataset.id
+                })
+            }
+        },
+
+        tapBanner: function(e) {
+            if (e.currentTarget.dataset.id != 0 && !this.$parent.globalData.navigating) {
+                this.$parent.globalData.navigating = false;
+                wx.navigateTo({
+                    url: "/pages/goods-details/index?id=" + e.currentTarget.dataset.id
+                })
+            }
+        },
+
+        bindTypeTap: function(e) {
+            var _this = this;
+            _this.selectCurrent = e.index;
+        },
+    };
+
+    getStarGoods() {
+        let _this = this;
+        wx.request({
+            //url: "http://tonylist.azurewebsites.net/Item/LoadItem",
+            url: "http://39.105.120.87/Item/GetStarItem",
+            data: {
+                latitude: _this.$parent.globalData.latitude,
+                longitude: _this.$parent.globalData.longitude
+            },
+            success: function(res) {
+                _this.banners = res.data
+                _this.$apply();
+            }
+        })
+    }
+
+    getMoreGoods() {
+        let _this = this
+
+        this.setData({
+            currentLoading: true
+        })
+
+        let goods = _this.data.goods
+        skip = skip + 5
+
+        wx.request({
+            //url: "http://tonylist.azurewebsites.net/Item/LoadItem",
+            url: "http://39.105.120.87/Item/LoadItem",
+            data: {
+                skip: skip,
+                catalogue: _this.data.activeCategoryId,
+                latitude: _this.$parent.globalData.latitude,
+                longitude: _this.$parent.globalData.longitude
+            },
+            success: function(res) {
+                goods = goods.concat(res.data)
+                console.log(goods);
+
+                _this.goods = goods;
+                _this.loadingFinished = true;
+                _this.currentLoading = false;
+
+                if (res.data.length < 5) {
+                    _this.loadingMore = false;
+                }
+                else {
+                     _this.loadingMore = true;
+                }
+
+                _this.$apply();
+            }
+        })
+    }
+
+    getGoodsList(categoryId) {
+        let _this = this
+        wx.request({
+            //url: "http://tonylist.azurewebsites.net/Item/LoadItem",
+            url: "http://39.105.120.87/Item/LoadItem",
+            data: {
+                skip: skip,
+                catalogue: categoryId,
+                latitude: _this.$parent.globalData.latitude,
+                longitude: _this.$parent.globalData.longitude
+            },
+            success: function(res) {
+
+                _this.goods = res.data;
+                _this.loadingFinished = true;
+                _this.activeCategoryId = categoryId;
+                _this.currentLoading = false;
+
+                if (res.data.length < 5) {
+                    _this.loadingMore = false;
+                }
+                else {
+                    _this.loadingMore = true;
+                }
+
+                _this.$apply();
+            },
+            complete: function() {
+                wx.hideNavigationBarLoading() //完成停止加载
+                wx.stopPullDownRefresh() //停止下拉刷新
+            }
+        })
+    }
+
+    getCoupons() {
+        var that = this;
+        wx.request({
+            url: 'https://api.it120.cc/' + _this.$parent.globalData.subDomain + '/discounts/coupons',
+            data: {
+                type: ''
+            },
+            success: function(res) {
+                if (res.data.code == 0) {
+                    that.setData({
+                        hasNoCoupons: false,
+                        coupons: res.data.data
+                    });
+                }
+            }
+        })
+    }
+
+    gitCoupon(e) {
+        var that = this;
+        wx.request({
+            url: 'https://api.it120.cc/' + _this.$parent.globalData.subDomain + '/discounts/fetch',
+            data: {
+                id: e.currentTarget.dataset.id,
+                token: _this.$parent.globalData.token
+            },
+            success: function(res) {
+                if (res.data.code == 20001 || res.data.code == 20002) {
+                    wx.showModal({
+                        title: '错误',
+                        content: '来晚了',
+                        showCancel: false
+                    })
+                    return;
+                }
+                if (res.data.code == 20003) {
+                    wx.showModal({
+                        title: '错误',
+                        content: '你领过了，别贪心哦~',
+                        showCancel: false
+                    })
+                    return;
+                }
+                if (res.data.code == 30001) {
+                    wx.showModal({
+                        title: '错误',
+                        content: '您的积分不足',
+                        showCancel: false
+                    })
+                    return;
+                }
+                if (res.data.code == 20004) {
+                    wx.showModal({
+                        title: '错误',
+                        content: '已过期~',
+                        showCancel: false
+                    })
+                    return;
+                }
+                if (res.data.code == 0) {
+                    wx.showToast({
+                        title: '领取成功，赶紧去下单吧~',
+                        icon: 'success',
+                        duration: 2000
+                    })
+                } else {
+                    wx.showModal({
+                        title: '错误',
+                        content: res.data.msg,
+                        showCancel: false
+                    })
+                }
+            }
+        })
+    }
+
+    onShareAppMessage() {
+        return {
+            title: wx.getStorageSync('mallName') + '——' + _this.$parent.globalData.shareProfile,
+            path: '/pages/index/index',
+            success: function(res) {
+                // 转发成功
+            },
+            fail: function(res) {
+                // 转发失败
+            }
+        }
+    }
+
+    getNotice() {
+        var that = this;
+        wx.request({
+            url: 'https://api.it120.cc/' + _this.$parent.globalData.subDomain + '/notice/list',
+            data: { pageSize: 5 },
+            success: function(res) {
+                if (res.data.code == 0) {
+                    that.setData({
+                        noticeList: res.data.data
+                    });
+                }
+            }
+        })
+    }
+
+    getUserInfo(e) {
+        var _this = this
+        _this.$parent.globalData.userInfo = e.detail.userInfo;
+        _this.userInfo = e.detail.userInfo;
+        _this.hasUserInfo = true;
+    }
+
+    onLoad() {
+        let _this = this
+        _this.data.currentLoading = true;
+        _this.currentLoading = true;
+        wepy.getLocation({ type: 'wgs84' }).then(res => {
+            _this.$parent.globalData.latitude = res.latitude;
+            _this.$parent.globalData.longitude = res.longitude;
+
+            _this.getStarGoods();
+            _this.getGoodsList(-1);
+        }).catch(error => {
+            _this.getStarGoods();
+            _this.getGoodsList(-1);
+        });
+        
+    };
+
+    onShow() {
+
+    };
+
+    onPullDownRefresh() {
+        this.setData({
+            currentLoading: true
+        })
+        wx.showNavigationBarLoading();
+        this.getStarGoods()
+        this.getGoodsList(-1)
+    };
+
+    onReachBottom() {
+        console.log("bottom");
+        if (this.data.loadingMore)
+            this.getMoreGoods();
+    };
+}
+
+</script>

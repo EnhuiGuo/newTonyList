@@ -1,0 +1,436 @@
+<style lang="css">
+@import '/zanui/panel.wxss';
+@import '/zanui/btn.wxss';
+@import '/weui/weui-cell.wxss';
+@import '/weui/weui-uploader.wxss';
+@import '/weui/weui.wxss';
+</style>
+
+<template>
+    <view class="container">
+        <form bindsubmit="editItem">
+            <view class="zan-panel">
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">联系人</view>
+                    <input type="text" name="Contact" value="{{item.Contact}}" placeholder="名字" class="zan-field__input zan-cell__bd zan-field__placeholder" />
+                </view>
+
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">联系电话</view>
+                    <input type="number" name="Phone" value="{{item.Phone}}" placeholder="请输入手机号" class="zan-field__input zan-cell__bd zan-field__placeholder" />
+                </view>
+
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">微信</view>
+                    <input type="text" name="WeChat" value="{{item.WeChat}}" placeholder="请输入微信" class="zan-field__input zan-cell__bd zan-field__placeholder" />
+                </view>
+
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">QQ</view>
+                    <input type="number" name="QQ" value="{{item.QQ}}" placeholder="请输入QQ" class="zan-field__input zan-cell__bd zan-field__placeholder" />
+                </view>
+
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">选择类别</view>
+                    <picker mode="selector" class="zan-field__input zan-cell__bd" range="{{ catalogues }}" range-key="{{'name'}}" value="{{ cl_index }}" bindchange="bindPickerChange" disabled="{{disabled}}">
+                        {{ catalogues[cl_index].name }}
+                    </picker>
+                </view>
+
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">物品介绍</view>
+                    <input type="textarea" name="Description" value="{{item.Description}}" placeholder="物品信息" class="zan-field__input zan-cell__bd zan-field__placeholder" />
+                </view>
+
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">价格</view>
+                    <input type="number" name="Price" value="{{item.Price}}" placeholder="请输入价格" class="zan-field__input zan-cell__bd zan-field__placeholder" />
+                </view>
+
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">可送货？</view>
+                    <switch checked="{{item.CanDelivery}}" name="CanDelivery" bindchange='delivedChange' disabled="{{disabled}}">
+                    </switch>
+                </view>
+
+                <view class="zan-cell zan-field" wx:if="{{item.CanDelivery}}">
+                    <view class="zan-cell__hd zan-field__title">运费</view>
+                    <input type="number" name="DeliveryFee" value="{{item.DeliveryFee}}" placeholder="请输入运费" class="zan-field__input zan-cell__bd zan-field__placeholder" />
+                </view>
+
+                <view class="zan-cell zan-field">
+                    <view class="zan-cell__hd zan-field__title">地址</view>
+                    <input type="text" name="Address" value="{{item.Address}}" placeholder="请输入详细地址" class="zan-field__input zan-cell__bd zan-field__placeholder" />
+                </view>
+            </view>
+            <view class="zan-panel">
+                <button class="zan-btn zan-btn--large zan-btn--primary" formType="submit" disabled="{{disabled}}">保存</button>
+                <button class="zan-btn zan-btn--large zan-btn--warn" bindtap="bindCancel" disabled="{{disabled}}">取消</button>
+            </view>
+        </form>
+        <view class="page">
+            <view class="page__bd">
+                <view class="weui-cells">
+                    <view class="weui-cell">
+                        <view class="weui-cell__bd">
+                            <view class="weui-uploader">
+                                <view class="weui-uploader__hd">
+                                    <view class="weui-uploader__title">添加图片 (长按图片可删除)</view>
+                                    <view class="weui-uploader__info">{{imgList.length}}/9</view>
+                                </view>
+                                <view class="weui-uploader__bd">
+                                    <view class="weui-uploader__files" id="uploaderFiles">
+                                        <block wx:for="{{imgList}}" wx:key="index" wx:for-item="img">
+                                            <view class="weui-uploader__file weui-uploader__file_status" id="{{img.Id}}" bindtap="viewImg" bindlongpress="deleteImg" data-index="{{index}}" data-img-Id="{{img.Id}}">
+                                                <image class="weui-uploader__img" src="{{img.Path}}" mode="aspectFill" />
+                                            </view>
+                                        </block>
+                                    </view>
+                                    <view class="weui-uploader__input-box">
+                                        <view class="weui-uploader__input" bindtap="chooseImage"></view>
+                                    </view>
+                                </view>
+                            </view>
+                        </view>
+                    </view>
+                </view>
+            </view>
+        </view>
+
+        <zanToast></zanToast>
+        <zanToptips></zanToptips>
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import WxValidate from '../plugins/WxValidate'
+import zanToptips from '../components/zan-toptips'
+import zanField from '../components/zan-field'
+import zanToast from '../components/zan-toast'
+
+export default class EditItem extends wepy.page {
+    components = {
+        zanField,
+        zanToast,
+        zanToptips
+    }
+
+    config = {
+        navigationBarTitleText: "编辑物品"
+    }
+
+    data = {
+        item: null,
+        hasUserInfo: false,
+        disabled: false,
+        imgList: [],
+        cl_index: 0,
+        openid: null,
+        delived: true,
+        catalogues: [
+            {
+                id: 1,
+                name: "厨具"
+            },
+            {
+                id: 2,
+                name: "服装"
+            },
+            {
+                id: 3,
+                name: "家电"
+            },
+            {
+                id: 4,
+                name: "汽车"
+            },
+            {
+                id: 0,
+                name: "其他"
+            },
+        ]
+    }
+
+    showToast() {
+        this.$invoke('zanToast', 'showZanToast', { title: '上传照片中...' })
+    }
+
+    showTopTips(message) {
+        this.$invoke('zanToptips', 'showZanTopTips', { content: message, options: 2000 })
+    }
+
+    toggleDisable() {
+        this.disabled = !this.data.disabled;
+        this.$apply();
+    }
+
+    onReady() {
+        let _this = this;
+        setTimeout(function() {
+            _this.$parent.globalData.navigating = false;
+        }, 2000);
+    }
+
+    bindCancel(e) {
+        wx.navigateBack();
+    }
+
+    bindPickerChange(e) {
+        this.cl_index = e.detail.value;
+    }
+
+    onLoad(value) {
+        let _this = this
+        _this.data.itemId = value.id
+        wx.request({
+            //url: "http://tonylist.azurewebsites.net/Item/ItemDetailForEdit",
+            url: "http://39.105.120.87/Item/ItemDetailForEdit",
+            method: 'GET',
+            data: {
+                id: value.id
+            }, // 设置请求的 参数
+            success: function(item) {
+                _this.item = item.data;
+                _this.cl_index = _this.data.catalogues.findIndex(x => x.id == item.data.Catalogue);
+                _this.imgList = item.data.Images;
+                _this.$apply();
+            }
+        })
+
+        this.initValidate()
+    }
+
+    initValidate() {
+        this.WxValidate = new WxValidate({
+            Contact: {
+                required: true,
+            },
+            Price: {
+                required: true,
+            }
+        },
+            {
+                Contact: {
+                    required: "请输入联系人姓名",
+                },
+                Price: {
+                    required: "价格不能是空的",
+                }
+            }
+        )
+    }
+
+    chooseImage() {
+        let _this = this;
+        wx.showActionSheet({
+            itemList: ['从相册中选择', '拍照'],
+            itemColor: "#f7982a",
+            success: function(res) {
+                if (!res.cancel) {
+                    if (res.tapIndex == 0) {
+                        _this.chooseWxImage('album')
+                    } else if (res.tapIndex == 1) {
+                        _this.chooseWxImage('camera')
+                    }
+                }
+            }
+        })
+    }
+
+    chooseWxImage(type) {
+        let _this = this;
+        let imgList = _this.data.imgList;
+        let newImgList = [];
+        wx.chooseImage({
+            sizeType: ['original', 'compressed'],
+            sourceType: [type],
+            success: function(res) {
+                var tempFilePaths = res.tempFilePaths
+
+                if (imgList != null && imgList.length + tempFilePaths.length > 9) {
+                    wx.showModal({
+                        title: '照片限制',
+                        content: '目前最多只能上传9张照片，见谅！',
+                        confirmText: "知道了!",
+                        showCancel: false
+                    });
+                }
+                else {
+                    for (let i = 0; i < tempFilePaths.length; i++) {
+                        let newImg = {
+                            Id: "",
+                            Path: tempFilePaths[i]
+                        }
+                        newImgList.push(newImg);
+                    }
+                }
+
+                if (newImgList != null && newImgList.length > 0) {
+                    wx.showLoading({
+                        title: '上传中...',
+                    })
+
+                    _this.disabled = !_this.data.disabled;
+
+                    _this.$parent.uploadEditImages({
+                        // url: 'http://tonylist.azurewebsites.net/Item/AddEditImages',
+                        url: 'http://39.105.120.87/Item/AddEditImages',
+                        imgs: newImgList,//这里是选取的图片的地址数组
+                        itemId: _this.data.item.Id,
+                        chenggong: function(img, i) {
+                            imgList.push(JSON.parse(img))
+                        },
+                        finished: function(done) {
+                            wx.hideLoading()
+                            if (done) {
+                                _this.imgList = imgList;
+                                _this.disabled = !_this.data.disabled;
+
+                                _this.$apply();
+                            }
+                        },
+                    })
+                }
+            }
+        })
+    }
+
+    toggleDisable() {
+        this.disabled = !this.data.disabled;
+        this.$apply();
+    }
+
+    delivedChange(e) {
+        let item = this.data.item;
+        item.CanDelivery = e.detail.value;
+        this.item = item;
+    }
+
+    editItemFunction(e) {
+        let _this = this;
+        if (_this.$parent.globalData.latitude != 0 && _this.$parent.globalData.latitude != 0) {
+            e.detail.value.Latitude = _this.$parent.globalData.latitude;
+            e.detail.value.Longitude = _this.$parent.globalData.longitude;
+
+            if (!this.WxValidate.checkForm(e)) {
+                const error = this.WxValidate.errorList[0]
+                _this.showTopTips(error.msg);
+                _this.toggleDisable();
+                return false;
+            }
+
+            if (e.detail.value.WeChat == "" && e.detail.value.Phone == "" && e.detail.value.QQ == "") {
+                _this.showTopTips('请至少填上一个联系方式!')
+                _this.toggleDisable();
+                return false;
+            }
+
+            if (e.detail.value.CanDelivery && e.detail.value.DeliveryFee == "") {
+                _this.showTopTips('运费不能为空!')
+                _this.toggleDisable();
+                return false;
+            }
+
+            wx.showLoading({
+                title: '修改中...',
+            })
+
+            e.detail.value.Id = _this.data.item.Id;
+            e.detail.value.Catalogue = this.data.catalogues[this.data.cl_index].id;
+            wx.request({
+                //url: "http://tonylist.azurewebsites.net/Item/UpdateItem",
+                url: "http://39.105.120.87/Item/UpdateItem",
+                method: 'POST',
+                data: e.detail.value, // 设置请求的 参数
+                success: function(done) {
+                    if (done)
+                        wx.showModal({
+                            title: '修改成功',
+                            content: '需要离开修改页面么',
+                            success: function(res) {
+                                if (res.confirm) {
+                                    wx.navigateBack()
+                                }
+                            }
+                        })
+                },
+                fail: function(message) {
+                    _this.showTopTips('修改失败!')
+                },
+                complete: function(message) {
+                    wx.hideLoading();
+                    _this.toggleDisable();
+                }
+            })
+        }
+    }
+
+    editItem(e) {
+        var _this = this
+        _this.toggleDisable();
+
+        wx.authorize({
+            scope: 'scope.userLocation',
+            success() {
+                if (_this.$parent.globalData.latitude == 0 && _this.$parent.globalData.latitude == 0) {
+                    wepy.getLocation({ type: 'wgs84' }).then(res => {
+                        _this.$parent.globalData.latitude = res.latitude;
+                        _this.$parent.globalData.longitude = res.longitude;
+
+                        _this.editItemFunction(e);
+                    });
+                }
+                else {
+                    _this.editItemFunction(e);
+                }
+            },
+            fail() {
+                wx.showModal({
+                    content: '您必须授权获取地址，才可以添加物品在网站上。',
+                    showCancel: false,
+                    confirmText: "知道了！",
+                    success: function() {
+                        wx.openSetting({
+                            complete() {
+                                _this.toggleDisable();
+                            }
+                        });
+                        _this.$parent.globalData.navigating = false;
+                    }
+                });
+            }
+        })
+    }
+
+    deleteImg(e) {
+        let _this = this
+        wx.showModal({
+            title: '提示',
+            content: '确认要删除这个照片么？',
+            success: function(res) {
+                if (res.confirm) {
+                    wx.vibrateShort({
+                        success: function() {
+                            wx.request({
+                                url: "http://39.105.120.87/Item/DeleteImage",
+                                method: 'POST',
+                                data: {
+                                    id: e.currentTarget.dataset.imgId
+                                },
+                                success: function(success) {
+                                    if (success) {
+                                        _this.data.imgList.splice(e.currentTarget.dataset.index, 1)
+                                        _this.imgList = _this.data.imgList;
+                                        _this.$apply();
+                                    }
+                                }
+                            })
+                        }
+                    })
+                }
+            }
+        })
+    }
+}
+</script>

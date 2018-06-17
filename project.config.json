@@ -1,0 +1,15 @@
+{
+	"description": "project description",
+	"setting": {
+		"urlCheck": false,
+		"es6": false,
+		"postcss": false,
+		"minified": false,
+		"newFeature": true
+	},
+	"compileType": "miniprogram",
+	"appid": "wx6437d27bf0e7b7bf",
+	"projectname": "newTonyList",
+	"miniprogramRoot": "./dist",
+	"condition": {}
+}

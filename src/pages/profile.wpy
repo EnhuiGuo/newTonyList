@@ -1,0 +1,320 @@
+<style lang="css">
+@import '/zanui/card.wxss';
+@import '/zanui/color.wxss';
+@import '/zanui/btn.wxss';
+@import '/zanui/panel.wxss';
+</style>
+
+<template>
+    <view class="container">
+        <view wx:if="{{currentLoading}}" class="weui-loadmore">
+            <zanLoadmore :loading="_true"> </zanLoadmore>
+        </view>
+        <view wx:else>
+            <view class="zan-panel" wx:for-items="{{items}}" wx:key="{{ID}}" data-id="{{item.Id}}">
+                <view class="zan-card">
+                    <view class="zan-card__thumb" bindtap="{{!disabled?'viewDetail':''}}" data-item-id='{{item.Id}}'>
+                        <image class="zan-card__img" src="{{item.ShowImgPath}}" mode="aspectFit" lazy-load="true" />
+                    </view>
+                    <view class="zan-card__detail" bindtap="{{!disabled?'viewDetail':''}}" data-item-id='{{item.Id}}'>
+                        <view class="zan-card__detail-row">
+                            <view class="zan-card__right-col zan-c-red">$ {{item.Price}}</view>
+                            <view class="zan-card__left-col zan-ellipsis--l2">
+                                {{item.Description}}
+                            </view>
+                        </view>
+
+                        <view class="zan-card__detail-row zan-c-gray-darker">
+                            <view class="zan-card__left-col" wx:if="{{item.CanDelivery}}">
+                                可送货
+                            </view>
+                            <view class="zan-card__left-col" wx:else>
+                                不送货
+                            </view>
+                        </view>
+                    </view>
+
+                    <view class="zan-card__detail">
+                        <view class="zan-card__detail-row">
+                            <view class="zan-card__left-col">
+                                <button data-index="{{index}}" data-item-id="{{item.Id}}" class="zan-btn zan-btn--mini zan-btn--danger zan-btn--plain" catchtap="delItem">删 除</button>
+                            </view>
+                            <view class="zan-card__right-col">
+                                <switch checked='{{item.OnSale}}' disabled="{{disabled}}" class='onSaleStatuts' bindchange="onSaleChange" data-index="{{index}}" data-item-id="{{item.Id}}">
+                                    <!--<view class='success' wx:if="{{item.OnSale}}">上架</view>
+                                                                                <view class='danger' wx:else>下架</view>-->
+                                </switch>
+                            </view>
+                        </view>
+                    </view>
+
+                </view>
+            </view>
+            <view class="zan-panel">
+                <button class="zan-btn zan-btn--large zan-btn--primary" open-type="getUserInfo" bindtap="toggleDisable" bindgetuserinfo="addGoodTab" disabled="{{disabled}}">添加物品</button>
+            </view>
+        </view>
+
+        <zanToptips/>
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import zanLoadmore from '../components/zan-loadmore'
+import zanSwitch from '../components/zan-switch'
+import zanToptips from '../components/zan-toptips'
+
+export default class Profile extends wepy.page {
+    config = {
+        navigationBarTitleText: "您的物品"
+    }
+
+    components = {
+        asyncSwitch: zanSwitch,
+        zanToptips: zanToptips,
+        zanLoadmore: zanLoadmore
+    }
+
+    data = {
+        items: [],
+        currentLoading: false,
+        disabled: false,
+        async_checked: true,
+        _true: true
+    }
+
+    showTopTips(message) {
+        this.$invoke('zanToptips', 'showZanTopTips', { content: message, options: 2000 })
+    }
+
+    onSaleChange(e) {
+        let _this = this
+        _this.toggleDisable();
+        this.data.items[e.currentTarget.dataset.index].OnSale = e.detail.value
+
+        wx.request({
+            url: "http://39.105.120.87/Item/ChangeOnSaleStatuts",
+            method: 'POST',
+            data: {
+                Id: e.currentTarget.dataset.itemId,
+                onSale: e.detail.value
+            }, // 设置请求的 参数
+            success: function(e) {
+                _this.items = _this.data.items
+                _this.$apply();
+            },
+            fail: function(message) {
+                _this.showTopTips('修改失败! ');
+            },
+            complete: function(message) {
+                _this.toggleDisable();
+                wx.hideLoading();
+                _this.$apply();
+            }
+        })
+    }
+
+    onShow() {
+        let _this = this;
+        _this.currentLoading = true;
+
+        wx.getStorage({
+            key: 'openid',
+            success: function(res) {
+                wx.request({
+                    //url: "http://tonylist.azurewebsites.net/Item/GetUserItems",
+                    url: "http://39.105.120.87/Item/GetUserItems",
+                    data: {
+                        openId: res.data
+                    },
+                    success: function(res) {
+                        _this.items = res.data;
+                        _this.currentLoading = false;
+                        _this.$apply();
+                    }
+                })
+            }
+        })
+    }
+
+    toggleDisable() {
+        this.disabled = !this.data.disabled;
+        this.$apply();
+    }
+
+    addGoodTab() {
+        let _this = this;
+        
+        if (!this.$parent.globalData.navigating) {
+            _this.$parent.globalData.navigating = true;
+            wx.showToast({
+                title: '页面加载中',
+                icon: 'loading',
+            })
+
+            wx.authorize({
+                scope: 'scope.userInfo',
+                success() {
+                    wx.getStorage({
+                        key: 'userInfo',
+                        success: function(res) {
+                            wx.navigateTo({
+                                url: '../pages/addItem'
+                            })
+                        },
+                        fail: function(e) {
+                            //发起网络请求
+                            wx.getUserInfo({
+                                success: res => {
+                                    wx.setStorageSync('userInfo', res.userInfo)
+                                    wx.navigateTo({
+                                        url: '../pages/addItem'
+                                    })
+                                }
+                            })
+                        },
+                    })
+                },
+                fail() {
+                    wx.showModal({
+                        content: '您必须授权，才可以添加物品在网站上。',
+                        showCancel: false,
+                        confirmText: "知道了！",
+                        success: function() {
+                            wx.openSetting();
+                            _this.$parent.globalData.navigating = false;
+                        }
+                    });
+                },
+                complete() {
+                    _this.disabled = false;
+                    _this.$apply();
+                }
+            })
+
+            // wx.getSetting({
+            //     success(res) {
+            //         if (!res.authSetting['scope.userInfo']) {
+            //             wx.authorize({
+            //                 scope: 'scope.userInfo',
+            //                 success() {
+            //                     wx.getStorage({
+            //                         key: 'userInfo',
+            //                         success: function(res) {
+            //                             wx.navigateTo({
+            //                                 url: '../pages/addItem'
+            //                             })
+            //                         },
+            //                         fail: function(e) {
+            //                             //发起网络请求
+            //                             wx.getUserInfo({
+            //                                 success: res => {
+            //                                     wx.setStorageSync('userInfo', res.userInfo)
+            //                                     wx.navigateTo({
+            //                                         url: '../pages/addItem'
+            //                                     })
+            //                                 }
+            //                             })
+            //                         },
+            //                     })
+            //                 },
+            //                 fail() {
+            //                     wx.showModal({
+            //                         content: '您必须授权，才可以添加物品在网站上。',
+            //                         showCancel: false,
+            //                         confirmText: "知道了！",
+            //                         success: function() {
+            //                             wx.openSetting();
+            //                         }
+            //                     });
+            //                 },
+            //                 complete() {
+            //                     _this.disabled = false;
+            //                     _this.$apply();
+            //                 }
+            //             })
+            //         }
+            //         else {
+            //             wx.getStorage({
+            //                 key: 'userInfo',
+            //                 success: function(res) {
+            //                     wx.navigateTo({
+            //                         url: '../pages/addItem'
+            //                     })
+            //                 },
+            //                 fail: function(e) {
+            //                     //发起网络请求
+            //                     wx.getUserInfo({
+            //                         success: res => {
+            //                             wx.setStorageSync('userInfo', res.userInfo)
+            //                             wx.navigateTo({
+            //                                 url: '../pages/addItem'
+            //                             })
+            //                         }
+            //                     })
+            //                 },
+            //                 complete: function() {
+            //                     _this.toggleDisable();
+            //                 }
+            //             })
+            //         }
+            //     },
+            //     complete() {
+            //         console.log("fail");
+            //     }
+            // })
+        }
+    }
+
+    delItem(e) {
+        let _this = this
+        wx.showModal({
+            content: '您确定要删除这个物品么？',
+            success: function(res) {
+                if (res.confirm) {
+                    // wx.showToast({
+                    //     title: '删除中..',
+                    //     icon: 'loading',
+                    // })
+
+                    wx.showLoading({
+                        title: '删除中..'
+                    });
+
+                    wx.request({
+                        // url: "http://tonylist.azurewebsites.net/Item/DeleteItem",
+                        url: "http://39.105.120.87/Item/DeleteItem",
+                        method: 'POST',
+                        data: {
+                            Id: e.currentTarget.dataset.itemId,
+                        }, // 设置请求的 参数
+                        success: function(success) {
+                            _this.showTopTips('删除成功! ')
+                            _this.data.items.splice(e.currentTarget.dataset.index, 1)
+                            _this.items = _this.data.items;
+                            _this.$apply();
+                        },
+                        fail: function(message) {
+                            _this.showTopTips('删除失败! ')
+                        },
+                        complete: function() {
+                            wx.hideLoading();
+                        }
+                    })
+                }
+            }
+        })
+    }
+
+    viewDetail(e) {
+        let _this = this;
+        if (!_this.$parent.globalData.navigating) {
+            _this.$parent.globalData.navigating = true;
+            wx.navigateTo({
+                url: '/pages/itemDetail?id=' + e.currentTarget.dataset.itemId,
+            })
+        }
+    }
+}
+</script>

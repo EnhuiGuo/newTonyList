@@ -1,0 +1,194 @@
+<style lang="css">
+@import '/zanui/panel.wxss';
+@import '/zanui/col.wxss';
+@import '/zanui/row.wxss';
+@import '/zanui/color.wxss';
+@import '/zanui/btn.wxss';
+
+.infomation {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.infomation .zan-col {
+    line-height: 30px;
+    text-align: center;
+    background-color: #39a9ed;
+    font-size: 12px;
+    color: #fff;
+}
+
+.infomation .zan-col:nth-child(even) {
+    background-color: #66c6f2;
+}
+
+.container {
+    min-height: 100%;
+    padding-bottom: 100rpx;
+}
+
+.swiper-container {
+    background-color: #f2f2f2;
+    width: 100%;
+    position: relative;
+}
+
+.swiper_box {
+    width: 100%;
+    height: 748rpx;
+}
+
+swiper-item image {
+    width: 100%;
+    display: inline-block;
+    overflow: hidden;
+    height: 748rpx;
+}
+
+.swiper-container .dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 20rpx;
+    display: flex;
+    justify-content: center;
+}
+
+.swiper-container .dots .dot {
+    margin: 0 8rpx;
+    width: 14rpx;
+    height: 14rpx;
+    background: #000;
+    border-radius: 50%;
+    transition: all 0.6s;
+    opacity: 0.3;
+}
+
+.swiper-container .dots .dot.active {
+    opacity: 0.6;
+}
+
+.zan-panel {
+    padding: 24rpx;
+}
+</style>
+
+<template>
+    <view class='container'>
+        <view class='swiper-container'>
+            <swiper class='swiper_box' autoplay="true" indicator-dots='true' circular='true'>
+                <block wx:for="{{item.Images}}" wx:key="{{item}}" wx:for-item="img">
+                    <swiper-item class="slide-image">
+                        <image src="{{img}}" width="355" mode="aspectFit" lazy-load="true" bindtap='viewImg' data-index="{{index}}" />
+                    </swiper-item>
+                </block>
+            </swiper>
+        </view>
+        <view class="zan-panel">
+            <view class="zan-row">
+                <view class="zan-col zan-col-12 zan-c-red">
+                    $ {{item.Price}}
+                </view>
+                <view class="zan-col zan-col-12">
+                    <view style="float:right">{{item.Distance}} km</view>
+                </view>
+            </view>
+            <view class="zan-c-gray-darker">
+                {{item.Description}}
+            </view>
+            <view class="zan-row infomation">
+                <view class="zan-col zan-col-8">
+                    联系人：
+                    <text selectable='true'>{{item.Contact}}</text>
+                </view>
+                <view wx:if="{{item.Phone != ''}}" class="zan-col zan-col-8">
+                    手机:
+                    <text selectable='true'>{{item.Phone}}</text>
+                </view>
+                <view wx:if="{{item.WeChat != ''}}" class="zan-col zan-col-8">
+                    微信:
+                    <text selectable='true'>{{item.WeChat}}</text>
+                </view>
+                <view wx:if="{{item.QQ != '' || item.QQ != 'null'}}" class="zan-col zan-col-8">
+                    QQ:
+                    <text selectable='true'>{{item.QQ}}</text>
+                </view>
+                <view wx:if="{{item.CanDelivery}}" class="zan-col zan-col-8">
+                    可送货
+                </view>
+                <view wx:if="{{item.CanDelivery}}" class="zan-col zan-col-8">
+                    运费: {{item.DeliveryFee}}
+                </view>
+            </view>
+            <view class="zan-row">
+                <button class="zan-btn zan-btn--large zan-btn--warn" bindtap='editItem'>修改物品</button>
+            </view>
+
+        </view>
+    </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+export default class ItemDetail extends wepy.page {
+    data = {
+        itemId: null,
+        item: null,
+        disabled: false
+    }
+
+    config = {
+        navigationBarTitleText: "物品信息"
+    }
+
+    editItem() {
+        let _this = this;
+
+        if (!_this.$parent.globalData.navigating) {
+            _this.$parent.globalData.navigating = true;
+            wx.navigateTo({
+                url: '/pages/itemEdit?id=' + _this.data.itemId,
+            })
+        }
+    }
+
+    onShow() {
+        let _this = this
+        _this.getItem(this.data.itemId)
+        setTimeout(function() {
+            _this.$parent.globalData.navigating = false;
+        }, 1000);
+    }
+
+    onLoad(value) {
+        this.data.itemId = value.id
+    }
+
+    getItem(itemId) {
+        let _this = this
+        wx.request({
+            // url: "http://tonylist.azurewebsites.net/Item/ItemDetail",
+            url: "http://39.105.120.87/Item/ItemDetail",
+            method: 'GET',
+            data: {
+                id: itemId,
+                latitude: _this.$parent.globalData.latitude,
+                longitude: _this.$parent.globalData.longitude
+            }, // 设置请求的 参数
+            success: function(item) {
+                _this.item = item.data;
+                _this.$apply();
+            }
+        })
+    }
+
+    viewImg(e) {
+        let index = e.currentTarget.dataset.index;
+        let imgList = this.data.item.Images;
+        wx.previewImage({
+            current: imgList[index],
+            urls: imgList
+        })
+    }
+}
+</script>
